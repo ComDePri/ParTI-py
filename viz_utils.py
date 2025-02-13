@@ -230,7 +230,7 @@ def save_enrichment_results_data(results_dir: str,
         os.makedirs(results_dir)
 
     col_keys = ["feature_name", "archetype", "p-value", "is_significant", "median_difference", "mean_difference",
-                "Spearman_rho"]
+                "Spearman_rho", "Spearmans_p-value", "Spearman_is_significant"] # Roey added Spearmans_p-value to get the p-values of the Spearman correlation
     n_archs = enrichment_estimator.archetypes_.shape[0]
     n_features = len(cont_features_descs)
     archs_desc = []
@@ -244,9 +244,16 @@ def save_enrichment_results_data(results_dir: str,
                          enrichment_estimator.cont_rejections_.flatten().tolist(),
                          enrichment_estimator.cont_median_diffs_.flatten().tolist(),
                          enrichment_estimator.cont_mean_diffs_.flatten().tolist(),
-                         enrichment_estimator.cont_corr_rho_.flatten().tolist()))
+                         enrichment_estimator.cont_corr_rho_.flatten().tolist(),
+                         enrichment_estimator.cont_corr_p_vals_.flatten().tolist(), # Roey added this to get the p-values of the Spearman correlation
+                         enrichment_estimator.cont_corr_rejections_.flatten().tolist() # Roey added this to get the significance of p-values of the Spearman correlation
+                         ))
+
     df = pd.DataFrame(data_rows, columns=col_keys)
     df.to_csv(opj(results_dir, "{}continuous_enrichment_results.csv".format(run_desc)), index=False)
+    # If any of the cont_rejections_ or cont_corr_rejections_ columns has "True" in it, resave the file with the suffix "significant":
+    if any(df['is_significant']) or any(df['Spearman_is_significant']):
+        df.to_csv(opj(results_dir, "{}continuous_enrichment_results_SIGNIFICANT.csv".format(run_desc)), index=False)
 
     col_keys = ["feature_name", "archetype", "p-value", "is_significant", "rank_biserial_correlation"]
     n_features = len(disc_features_descs)

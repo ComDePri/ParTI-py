@@ -288,6 +288,11 @@ class EnrichmentCalculator(object):
                     continue  # mann-whitney will fail in the case that all values are the same
                 first_bin = feat_enrichment[ind_sorted[:, arch_index]][:points_per_bin]
                 rest = feat_enrichment[ind_sorted[:, arch_index]][points_per_bin:]
+                # Print the percentage of datapoints in the first bin with no decimal points:
+                print(f"Percentage of datapoints in the first bin: {np.round(100 * len(first_bin) / n_points, 0)}%")
+                print("Number of datapoints in the first bin: " + str(len(first_bin)))
+
+
                 _, p_val = mannwhitneyu(first_bin, rest)
                 self.cont_p_vals_[arch_index, feat_index] = p_val
                 self.cont_median_diffs_[arch_index, feat_index] = np.median(first_bin) - np.median(rest)
@@ -298,8 +303,12 @@ class EnrichmentCalculator(object):
         if n_cont_features > 0:
             self.cont_rejections_ = fdr_bh(self.cont_p_vals_.flatten(),
                                            self.fdr_threshold).reshape(self.cont_p_vals_.shape)
+            # Roey: Adding FDR correction to the p-values of theSpearman  correlation coefficients too
+            self.cont_corr_rejections_ = fdr_bh(self.cont_corr_p_vals_.flatten(),
+                                                self.fdr_threshold).reshape(self.cont_corr_p_vals_.shape)
         else:
             self.cont_rejections_ = np.zeros_like(self.cont_p_vals_)
+            self.cont_corr_rejections_= np.zeros_like(self.cont_corr_p_vals_)
 
 
 class ParTI(object):
